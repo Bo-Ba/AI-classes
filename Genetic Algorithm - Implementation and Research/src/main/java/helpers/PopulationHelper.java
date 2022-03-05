@@ -8,25 +8,19 @@ import java.util.stream.IntStream;
 public class PopulationHelper {
     private static Random random;
 
-    public static List<HashMap<Integer, Integer>> generatePopulation(int populationSize, int machinesNum, int x, int y) {
-        List<HashMap<Integer, Integer>> population = new LinkedList<HashMap<Integer, Integer>>();
-        int[] machinesArray = IntStream.range(0, machinesNum).toArray();
-        int[] locationsArray = IntStream.range(0, x * y).toArray();
+    public static List<Integer[]> generatePopulation(int populationSize, int machinesNum, int x, int y) {
+        List<Integer[]> population = new LinkedList<>();
+        Integer[] locationsArray = IntStream.range(0, x * y).boxed().toArray(Integer[]::new);
 
         for (int i = 0; i < populationSize; i++) {
-            int[] machinesIds = shuffle(Arrays.copyOf(machinesArray, machinesArray.length));
-            int[] machinesIndexes = shuffle(Arrays.copyOf(locationsArray, machinesArray.length));
-            HashMap<Integer, Integer> mesh = new HashMap<>();
+            Integer[] mesh = shuffle(locationsArray);
 
-            for (int j = 0; j < machinesIds.length; j++) {
-                mesh.put(machinesIds[j], machinesIndexes[j]);
-            }
             population.add(mesh);
         }
         return population;
     }
 
-    private static int[] shuffle(int[] array) {
+    private static Integer[] shuffle(Integer[] array) {
         if (random == null) random = new Random();
         int count = array.length;
         for (int i = count; i > 1; i--) {
@@ -35,27 +29,27 @@ public class PopulationHelper {
         return array;
     }
 
-    private static void swap(int[] array, int i, int j) {
+    private static void swap(Integer[] array, int i, int j) {
         int temp = array[i];
         array[i] = array[j];
         array[j] = temp;
     }
 
-    public static int calculateCost(List<CostFlow> costFlows, List<HashMap<Integer, Integer>> population, int rowNum, int colNum) {
+    public static int calculateCost(List<CostFlow> costFlows, List<Integer[]> population, int rowNum, int colNum) {
         int cost = 0;
-        for (HashMap<Integer, Integer> individual : population) {
+        for (Integer[] individual : population) {
             cost += calculateCost(costFlows, individual, rowNum, colNum);
         }
         return cost;
     }
 
-    public static int calculateCost(List<CostFlow> costFlows, HashMap<Integer, Integer> individual, int rowNum, int colNum) {
+    public static int calculateCost(List<CostFlow> costFlows, Integer[] individual, int rowNum, int colNum) {
         int cost = 0;
         for (CostFlow costFlow : costFlows) {
-            int manhattanDistance = computeManhattanDistance(individual.get(costFlow.getSource()) % colNum,
-                    individual.get(costFlow.getSource()) / rowNum,
-                    individual.get(costFlow.getDest()) % colNum,
-                    individual.get(costFlow.getDest()) / rowNum);
+            int manhattanDistance = computeManhattanDistance(individual[costFlow.getSource()] % colNum,
+                    individual[costFlow.getSource()] / rowNum,
+                    individual[costFlow.getDest()] % colNum,
+                    individual[costFlow.getDest()] / rowNum);
             cost += manhattanDistance * costFlow.getCost() * costFlow.getAmount();
         }
         return cost;
@@ -65,13 +59,13 @@ public class PopulationHelper {
         return Math.abs(xi - xj) + Math.abs(yi - yj);
     }
 
-    public HashMap<Integer, Integer> tournamentSelection(List<CostFlow> costFlows,
-                                                         List<HashMap<Integer, Integer>> population,
-                                                         int tournamentSize, int rowNum,
-                                                         int colNum) {
+    public Integer[] tournamentSelection(List<CostFlow> costFlows,
+                                         List<Integer[]> population,
+                                         int tournamentSize, int rowNum,
+                                         int colNum) {
 
         int bestCost = Integer.MAX_VALUE;
-        HashMap<Integer, Integer> bestIndividual = null;
+        Integer[] bestIndividual = null;
 
         for (int i = 0; i < tournamentSize; i++) {
             int individualIndex = random.nextInt(population.size());
