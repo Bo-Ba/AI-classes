@@ -3,6 +3,7 @@ package helpers;
 import dataClasses.CostFlow;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class PopulationHelper {
@@ -78,20 +79,23 @@ public class PopulationHelper {
         return Math.abs(xi - xj) + Math.abs(yi - yj);
     }
 
-    public Integer[] tournamentSelection(List<CostFlow> costFlows,
-                                         List<Integer[]> population,
-                                         int tournamentSize, int rowNum,
-                                         int colNum) {
-
+    public static Integer[] tournamentSelection(List<CostFlow> costFlows,
+                                                List<Integer[]> population,
+                                                int tournamentSize,
+                                                int rowNum,
+                                                int colNum) {
         int bestCost = Integer.MAX_VALUE;
         Integer[] bestIndividual = null;
+        List<Integer[]> tempPopulation = new ArrayList<>(population);
 
         for (int i = 0; i < tournamentSize; i++) {
-            int individualIndex = random.nextInt(population.size());
-            if (calculateCost(costFlows, population.get(individualIndex), rowNum, colNum) < bestCost) {
-                bestIndividual = population.get(individualIndex);
+            int individualIndex = random.nextInt(tempPopulation.size());
+            int individualCost = calculateCost(costFlows, tempPopulation.get(individualIndex), rowNum, colNum);
+            if (individualCost < bestCost) {
+                bestIndividual = tempPopulation.get(individualIndex);
+                bestCost = individualCost;
             }
-            population.remove(individualIndex);
+            tempPopulation.remove(individualIndex);
         }
 
         return bestIndividual;
@@ -99,29 +103,33 @@ public class PopulationHelper {
 
     public static Integer[] rouletteSelection(List<CostFlow> costFlows,
                                               List<Integer[]> population,
-                                              int tournamentSize, int rowNum,
+                                              int rowNum,
                                               int colNum) {
         List<Integer> costs = calculateCosts(costFlows, population, rowNum, colNum);
-        int sum = costs.stream().mapToInt(Integer::intValue).sum();
-        List<Double> probabilities = new LinkedList<>();
+        int costsSum = costs.stream().mapToInt(Integer::intValue).sum();
+
+        List<Double> probabilitiesList = costs.stream().map(cost -> (double) costsSum / (double) cost).collect(Collectors.toList());
+        double partsSum = probabilitiesList.stream().mapToDouble(Double::doubleValue).sum();
+        probabilitiesList = probabilitiesList.stream().map(db -> db / partsSum).collect(Collectors.toList());
 
         double probabilitiesSum = 0;
-        for (Integer individualCost : costs) {
-            probabilitiesSum += (double) individualCost / (double) sum;
-            probabilities.add(probabilitiesSum);
-        }
-
         Random r = new Random();
         double randomPick = r.nextDouble();
-        for (int i = 0; i < probabilities.size(); i++) {
-            if (probabilities.get(i) < randomPick) return population.get(i);
+        for (int i = 0; i < probabilitiesList.size(); i++) {
+            probabilitiesSum += probabilitiesList.get(i);
+            if (i == costs.size() - 1) probabilitiesSum = 1;
+            if (randomPick < probabilitiesSum) return population.get(i);
         }
+
         return null;
     }
 
     public static List<Integer[]> singlePointCrossover(Integer[] firstIndividual, Integer[] secondIndividual, int meshRows, int meshColumns) {
+        firstIndividual = firstIndividual.clone();
+        secondIndividual = secondIndividual.clone();
+
         int splitPoint = random.nextInt(firstIndividual.length);
-        if(splitPoint == 0) splitPoint++;
+        if (splitPoint == 0) splitPoint++;
 
         Integer[] temp = secondIndividual.clone();
         System.arraycopy(firstIndividual, splitPoint, secondIndividual, splitPoint, firstIndividual.length - splitPoint);
@@ -130,24 +138,23 @@ public class PopulationHelper {
         fixGenotypes(firstIndividual, meshRows * meshColumns);
         fixGenotypes(secondIndividual, meshRows * meshColumns);
 
-        return(Arrays.asList(firstIndividual, secondIndividual));
+        return (Arrays.asList(firstIndividual, secondIndividual));
     }
 
-    //TODO Find more optimal solution
     public static Integer[] fixGenotypes(final Integer[] individual, int possiblePositions) {
         HashSet<Integer> positionsSet = new HashSet<>(Arrays.asList(individual));
         HashSet<Integer> currentSet = new HashSet<>();
         int index = 0;
-        if(positionsSet.size() == individual.length) return individual;
+        if (positionsSet.size() == individual.length) return individual;
 
         for (int item : individual) {
             if (currentSet.contains(item)) {
                 int newPosition = item;
                 HashSet<Integer> drawnNumbers = new HashSet<>();
-                while(positionsSet.contains(newPosition)) {
+                while (positionsSet.contains(newPosition)) {
                     newPosition = random.nextInt(possiblePositions);
                     drawnNumbers.add(newPosition);
-                    if(drawnNumbers.size() == possiblePositions) break;
+                    if (drawnNumbers.size() == possiblePositions) break;
                 }
                 positionsSet.add(newPosition);
                 individual[index] = newPosition;
