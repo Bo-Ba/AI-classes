@@ -1,0 +1,12 @@
+{
+  "populationSize": 50,
+  "machinesNum": 24,
+  "rowNum": 5,
+  "colNum": 6,
+  "tournamentSize": 27,
+  "selectionPressure" : 10,
+  "mutationProbability": 0.4,
+  "crossoverProbability": 0.5,
+  "generationNum": 10000,
+  "dataFile": "hard"
+}

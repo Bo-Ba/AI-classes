@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dataClasses.Cost;
 import dataClasses.CostFlow;
 import dataClasses.Flow;
+import runner.SimulationRunner;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,5 +42,13 @@ public class DataLoader {
             }
         }
         return result;
+    }
+
+    public static SimulationRunner getRunner() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        File file = new File("Genetic Algorithm - Implementation and Research/src/main/resources/conf/config.json");
+
+        return objectMapper.readValue(file, new TypeReference<SimulationRunner>(){});
     }
 }
