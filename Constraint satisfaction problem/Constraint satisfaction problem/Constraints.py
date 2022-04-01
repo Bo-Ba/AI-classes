@@ -13,7 +13,7 @@ def check_three_consecutive_numbers(grid_part):
     counter = 1
     previous = grid_part[0]
     if previous == -1:
-        return
+        return False
     for i in range(1, len(grid_part)):
         if previous == grid_part[i] and not grid_part[i] == -1:
             counter = counter + 1
